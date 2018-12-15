@@ -103,7 +103,8 @@ namespace ImageProcessing
 
         static void Main(string[] args)
         {
-            byte[,] input = { { 1, 2, 3, 4, 5, 6 }, { 7, 8, 9, 10, 11, 12 }, { 13, 14, 15, 16, 17, 18 }, { 19, 20, 21, 22, 23, 24 } };
+            //byte[,] input = { { 1, 2, 3, 4, 5, 6 }, { 7, 8, 9, 10, 11, 12 }, { 13, 14, 15, 16, 17, 18 }, { 19, 20, 21, 22, 23, 24 } };
+            byte[,] input = { { 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10 }, { 11, 12, 13, 14, 15 } };
             //byte[,] input = { { 1, 2}, { 3,4}};
             int w = input.GetLength(1);
             int h = input.GetLength(0);
@@ -119,12 +120,12 @@ namespace ImageProcessing
             printImage(w, h, mrImage);
             Console.WriteLine();
 
-            double zoomFactor = 2.0;
+            double zoomFactor = 3.0;
             byte[,] zmImage = zoom(w, h, input, zoomFactor); 
             printImage((int)(w * zoomFactor), (int)(h * zoomFactor), zmImage);
             Console.WriteLine();
 
-            byte[,] roImage = rotation(w, h, input, 30);
+            byte[,] roImage = rotation(w, h, input, 90);
             printImage(w, h, roImage);
         }
     }
