@@ -9,27 +9,30 @@ using System.Threading.Tasks;
 
 namespace Monitoring
 {
+    static class Paths
+    {
+        public const string resultFile = "../../OUTFILE/RESULT.TXT";
+        public const string processOutFile = "../../OUTFILE/PROCESS.TXT";
+        public const string configFile = "../../CONFILE/CONFIG.TXT";
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
-            MainLogic logic = new MainLogic();
-            logic.mList = new List<MonitorInfo>();
-            logic.loadConfig();
-
+            MainLogic mLogic = new MainLogic();
             // Create Thread
             ThreadLogic th = new ThreadLogic();
-            Thread workerThread = new Thread(th.DoWork);
-            workerThread.Start(logic.mList);    // start함수 안에 parameter를 넣는다. 
+            Thread workerThread = new Thread(th.DoMonitoring);
+            workerThread.Start();    // start함수 안에 parameter를 넣는다. 
 
             // Tasklist work
             while (true)
             {
                 Console.Write("Memory Size : ");
                 int size = int.Parse(Console.ReadLine());
-                logic.TaskList(size);
+                mLogic.TaskList(size);
             }
-
 
             //workerThread.Join();
         }
@@ -37,32 +40,28 @@ namespace Monitoring
 
     class Logic
     {
-        protected string resultFile;
-        protected string processOutFile;
-        public Logic()
-        {
-            processOutFile = "../../OUTFILE/PROCESS.TXT";
-            resultFile = "../../OUTFILE/RESULT.TXT";
-        }
-    }
-
-    class ThreadLogic : Logic
-    {
-        private FileInfo getFileInfo(string fname)
+        protected FileInfo getFileInfo(string fname)
         {
             string path = "../../MONFILE/" + fname;
             FileInfo fi = new FileInfo(path);
             return fi;
         }
-       
-        private void WriteFileResult(string line)
+
+        protected void WriteFileResult(string line)
         {
-            StreamWriter sw = new StreamWriter(resultFile, true);
+            StreamWriter sw = new StreamWriter(Paths.resultFile, true);
             sw.WriteLine(line);
             sw.Close();
         }
 
-        private List<Tuple<string, int>> getTaskList()
+        protected void WriteResultAppend(string path, string line)
+        {
+            StreamWriter sw = new StreamWriter(path, true);
+            sw.WriteLine(line);
+            sw.Close();
+        }
+
+        protected List<Tuple<string, int>> getTaskList()
         {
             List<Tuple<string, int>> tList = new List<Tuple<string, int>>();
             ProcessStartInfo start = new ProcessStartInfo();
@@ -86,22 +85,47 @@ namespace Monitoring
                     {
                         string strSize = strWords[4].Replace(",", "");
                         int memSize = int.Parse(strSize);
-                        tList.Add(new Tuple<string,int>(strWords[0], memSize));
+                        tList.Add(new Tuple<string, int>(strWords[0], memSize));
                     }
                 }
             }
             return tList;
         }
+    }
 
-        public void DoWork(Object obj)
+    class ThreadLogic : Logic
+    {
+        public List<ConfigInfo> monitorList;
+
+        private List<ConfigInfo> loadConfig()
         {
-            List<MonitorInfo> miList = (List<MonitorInfo>)obj;
+            List<ConfigInfo> confList = new List<ConfigInfo>();
+
+            // Load Config File
+            StreamReader sr = new StreamReader(Paths.configFile);
+            while (true)
+            {
+                string line = sr.ReadLine();
+                if (line == "" || line == null)
+                    break;
+                ConfigInfo mInfo = new ConfigInfo(line);
+                confList.Add(mInfo);
+            }
+            sr.Close();
+
+            return confList;
+        }
+
+        public void DoMonitoring()
+        {
+            // load config file
+            monitorList = loadConfig(); 
 
             while (true)
             {
-                foreach (var item in miList)
+                foreach (var item in monitorList)
                 {
-                    if (item.Type == (int)MonitorInfo.EnumType.File)
+                    if (item.Type == (int)ConfigInfo.EnumType.File)
                     {
                         FileInfo fi = getFileInfo(item.FileName);
                         if (fi.Exists)
@@ -111,7 +135,7 @@ namespace Monitoring
                             {
                                 if (item.WriteCondition == false)
                                 {
-                                    WriteFileResult(item.Line);
+                                    WriteResultAppend(Paths.resultFile, item.Line);
                                     item.WriteCondition = true;
                                 }
                             }
@@ -125,7 +149,7 @@ namespace Monitoring
                             item.WriteCondition = false;
                             if (item.WriteExist == false)
                             {
-                                WriteFileResult(item.Line);
+                                WriteFileResult("FILE#"+item.FileName);
                                 item.WriteExist = true;
                             }
                         }
@@ -149,7 +173,7 @@ namespace Monitoring
                             item.WriteCondition = false;
                             if (item.WriteExist == false)
                             {
-                                WriteFileResult(item.Line);
+                                WriteFileResult("PROC#"+item.FileName);
                                 item.WriteExist = true;
                             }
                         }
@@ -181,71 +205,21 @@ namespace Monitoring
 
     class MainLogic : Logic
     {
-        public List<MonitorInfo> mList;
-        private string configFile;
-
-        public MainLogic()
-        {
-            configFile = "../../CONFILE/CONFIG.TXT";
-        }
-
-        public void loadConfig()
-        {
-            // Load Config File
-            StreamReader sr = new StreamReader(configFile);
-            while (true)
-            {
-                string line = sr.ReadLine();
-                if (line == "" || line == null)
-                    break;
-                MonitorInfo mInfo = new MonitorInfo(line);
-                mList.Add(mInfo);
-            }
-            sr.Close();
-        }
-
         public void TaskList(int size)
         {
-            ProcessStartInfo start = new ProcessStartInfo();
-            start.FileName = "tasklist.exe";
-            start.UseShellExecute = false;
-            start.RedirectStandardOutput = true;
-            start.CreateNoWindow = true;
+            List<Tuple<string, int>> tList = getTaskList();
 
-            Process process = Process.Start(start);         // exe 실행시
-            StreamReader reader = process.StandardOutput;   // 출력되는 값을 가져오기 위해 StreamReader에 연결  
-            while (true)
+            foreach(var v in tList)
             {
-                string line = reader.ReadLine();            // 출력값의 한 라인을 읽는다 
-                if (line == null)
-                    break;
-                char[] delimiter = { ' ' };
-                string[] strWords = line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
-                if (strWords.Length == 6)
+                if (v.Item2 > size)
                 {
-                    if (strWords[4].Contains(","))
-                    {
-                        string strSize = strWords[4].Replace(",", ""); 
-                        int memSize = int.Parse(strSize);
-                        if (memSize > size)
-                        {
-                            WriteProcessMemResult(strWords[0], memSize);
-                        }
-                    }
-                    Console.WriteLine(line);
+                    WriteResultAppend(Paths.processOutFile, v.Item1 + " " + v.Item2);
                 }
             }
         }
-
-        private void WriteProcessMemResult(string procName, int memSize)
-        {
-            StreamWriter sw = new StreamWriter(processOutFile, true);
-            sw.WriteLine(procName + " " + memSize);
-            sw.Close();
-        }
     }
-
-    class MonitorInfo
+    
+    class ConfigInfo
     {
         public enum EnumType { File, Proc, Error };
 
@@ -257,8 +231,8 @@ namespace Monitoring
         public bool WriteExist { get; set;  }
         public bool WriteCondition { get; set; }
 
-        public MonitorInfo() { }
-        public MonitorInfo(string input)
+        public ConfigInfo() { }
+        public ConfigInfo(string input)
         {
             Line = input;
             string[] words = input.Split('#');
