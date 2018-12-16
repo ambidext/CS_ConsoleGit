@@ -31,7 +31,7 @@ namespace Monitoring
             {
                 Console.Write("Memory Size : ");
                 int size = int.Parse(Console.ReadLine());
-                mLogic.TaskList(size);
+                mLogic.WriteLargerMemsProc(size);
             }
 
             //workerThread.Join();
@@ -45,13 +45,6 @@ namespace Monitoring
             string path = "../../MONFILE/" + fname;
             FileInfo fi = new FileInfo(path);
             return fi;
-        }
-
-        protected void WriteFileResult(string line)
-        {
-            StreamWriter sw = new StreamWriter(Paths.resultFile, true);
-            sw.WriteLine(line);
-            sw.Close();
         }
 
         protected void WriteResultAppend(string path, string line)
@@ -130,27 +123,27 @@ namespace Monitoring
                         FileInfo fi = getFileInfo(item.FileName);
                         if (fi.Exists)
                         {
-                            item.WriteExist = false;
+                            item.WroteExist = false;
                             if ((item.Condition == '>' && fi.Length > item.CondValue * 1024) || (item.Condition == '<' && fi.Length < item.CondValue * 1024))
                             {
-                                if (item.WriteCondition == false)
+                                if (item.WroteCondition == false)
                                 {
                                     WriteResultAppend(Paths.resultFile, item.Line);
-                                    item.WriteCondition = true;
+                                    item.WroteCondition = true;
                                 }
                             }
                             else
                             {
-                                item.WriteCondition = false;
+                                item.WroteCondition = false;
                             }
                         }
                         else
                         {
-                            item.WriteCondition = false;
-                            if (item.WriteExist == false)
+                            item.WroteCondition = false;
+                            if (item.WroteExist == false)
                             {
-                                WriteFileResult("FILE#"+item.FileName);
-                                item.WriteExist = true;
+                                WriteResultAppend(Paths.resultFile, "FILE#" + item.FileName);
+                                item.WroteExist = true;
                             }
                         }
                     }
@@ -170,29 +163,29 @@ namespace Monitoring
 
                         if (bExistInTaskList == false)
                         {
-                            item.WriteCondition = false;
-                            if (item.WriteExist == false)
+                            item.WroteCondition = false;
+                            if (item.WroteExist == false)
                             {
-                                WriteFileResult("PROC#"+item.FileName);
-                                item.WriteExist = true;
+                                WriteResultAppend(Paths.resultFile, "PROC#" + item.FileName);
+                                item.WroteExist = true;
                             }
                         }
                         else
                         {
-                            item.WriteExist = false;
+                            item.WroteExist = false;
                             foreach (var v in findMems)
                             {
                                 if ((item.Condition == '>' && v > item.CondValue) || (item.Condition == '<' && v < item.CondValue))
                                 {
-                                    if (item.WriteCondition == false)
+                                    if (item.WroteCondition == false)
                                     {
-                                        WriteFileResult(item.Line);
-                                        item.WriteCondition = true;
+                                        WriteResultAppend(Paths.resultFile, item.Line);
+                                        item.WroteCondition = true;
                                     }
                                 }
                                 else
                                 {
-                                    item.WriteCondition = false;
+                                    item.WroteCondition = false;
                                 }
                             }
                         }
@@ -205,7 +198,7 @@ namespace Monitoring
 
     class MainLogic : Logic
     {
-        public void TaskList(int size)
+        public void WriteLargerMemsProc(int size)
         {
             List<Tuple<string, int>> tList = getTaskList();
 
@@ -228,11 +221,10 @@ namespace Monitoring
         public string FileName { get; set;  }
         public char Condition { get; set;  } // "<" or ">"
         public int CondValue { get; set;  } // File or Mem Size Value
-        public bool WriteExist { get; set;  }
-        public bool WriteCondition { get; set; }
+        public bool WroteExist { get; set;  }
+        public bool WroteCondition { get; set; }
 
-        public ConfigInfo() { }
-        public ConfigInfo(string input)
+        private void parsing(string input)
         {
             Line = input;
             string[] words = input.Split('#');
@@ -257,7 +249,7 @@ namespace Monitoring
                 CondValue = -1;
             }
             else
-            {                
+            {
                 if (words[2].Contains("<"))
                 {
                     Condition = '<';
@@ -271,6 +263,12 @@ namespace Monitoring
                     CondValue = int.Parse(condWords[1]);
                 }
             }
+        }
+
+        public ConfigInfo() { }
+        public ConfigInfo(string input)
+        {
+            parsing(input);
         }
     }
 }
