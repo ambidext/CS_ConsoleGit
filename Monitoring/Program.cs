@@ -67,19 +67,43 @@ namespace Monitoring
             StreamReader reader = process.StandardOutput;   // 출력되는 값을 가져오기 위해 StreamReader에 연결  
             while (true)
             {
+                //string line = reader.ReadLine();            // 출력값의 한 라인을 읽는다 
+                //if (line == null)
+                //    break;
+                //char[] delimiter = { ' ' };
+                //string[] strWords = line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+                //if (strWords.Length == 6)
+                //{
+                //    if (strWords[4].Contains(","))
+                //    {
+                //        string strSize = strWords[4].Replace(",", "");
+                //        int memSize = int.Parse(strSize);
+                //        tList.Add(new Tuple<string, int>(strWords[0], memSize));
+                //    }
+                //}
                 string line = reader.ReadLine();            // 출력값의 한 라인을 읽는다 
                 if (line == null)
                     break;
+                if (line == "")
+                    continue;
                 char[] delimiter = { ' ' };
                 string[] strWords = line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
-                if (strWords.Length == 6)
+                if (strWords.Length < 6)
+                    continue;
+                int lastIdx = strWords.Length - 1;
+                if (strWords[lastIdx] == "K")
                 {
-                    if (strWords[4].Contains(","))
+                    string procName = "";
+                    int memSize = int.Parse(strWords[lastIdx - 1].Replace(",", ""));
+
+                    for (int i = 0; i < strWords.Length - 5; i++) // 뒤에서 5개까지는 이름이 아니므로, 5개를 제외한 나머지가 모두 Process이름
                     {
-                        string strSize = strWords[4].Replace(",", "");
-                        int memSize = int.Parse(strSize);
-                        tList.Add(new Tuple<string, int>(strWords[0], memSize));
+                        if (i != 0)
+                            procName += " ";
+                        procName += strWords[i];
                     }
+                    //Console.WriteLine(procName + ": " + memSize);
+                    tList.Add(new Tuple<string, int>(procName, memSize));
                 }
             }
             return tList;
