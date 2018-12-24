@@ -52,7 +52,12 @@ namespace Monitoring
             StreamWriter sw = new StreamWriter(path, true);
             sw.WriteLine(line);
             sw.Close();
-        }
+
+            //FileStream fs = new FileStream(path, FileMode.Append);
+            //byte[] byteArray = { 0x01, 0x02, 0x03 };
+            //fs.Write(byteArray, 0, byteArray.Length);
+            //fs.Close();
+        }  
 
         protected List<Tuple<string, int>> getTaskList()
         {
@@ -67,20 +72,6 @@ namespace Monitoring
             StreamReader reader = process.StandardOutput;   // 출력되는 값을 가져오기 위해 StreamReader에 연결  
             while (true)
             {
-                //string line = reader.ReadLine();            // 출력값의 한 라인을 읽는다 
-                //if (line == null)
-                //    break;
-                //char[] delimiter = { ' ' };
-                //string[] strWords = line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
-                //if (strWords.Length == 6)
-                //{
-                //    if (strWords[4].Contains(","))
-                //    {
-                //        string strSize = strWords[4].Replace(",", "");
-                //        int memSize = int.Parse(strSize);
-                //        tList.Add(new Tuple<string, int>(strWords[0], memSize));
-                //    }
-                //}
                 string line = reader.ReadLine();            // 출력값의 한 라인을 읽는다 
                 if (line == null)
                     break;
@@ -133,6 +124,80 @@ namespace Monitoring
             return confList;
         }
 
+        private void FileAlarmCheck(ConfigInfo item)
+        {
+            FileInfo fi = getFileInfo(item.FileName);
+            if (fi.Exists)
+            {
+                //item.WroteExist = false;
+                if ((item.Condition == '>' && fi.Length > item.CondValue * 1024) || (item.Condition == '<' && fi.Length < item.CondValue * 1024))
+                {
+                    if (item.LastAlarmAttr != ConfigInfo.AlarmAttr.Size)
+                    {
+                        WriteResultAppend(Paths.resultFile, item.Line);
+                        item.LastAlarmAttr = ConfigInfo.AlarmAttr.Size;
+                    }
+                }
+                else
+                {
+                    item.LastAlarmAttr = ConfigInfo.AlarmAttr.None;
+                }
+            }
+            else
+            {
+                //item.WroteCondition = false;
+                if (item.LastAlarmAttr != ConfigInfo.AlarmAttr.Exist)
+                {
+                    WriteResultAppend(Paths.resultFile, "FILE#" + item.FileName);
+                    item.LastAlarmAttr = ConfigInfo.AlarmAttr.Exist;
+                }
+            }
+        }
+
+        private void ProcAlarmCheck(ConfigInfo item, List<Tuple<string, int>> procList)
+        {
+            List<int> findMems = new List<int>();
+            bool bExistInTaskList = false;
+            foreach (var v in procList)
+            {
+                if (v.Item1 == item.FileName)
+                {
+                    findMems.Add(v.Item2);
+                    bExistInTaskList = true;
+                }
+            }
+
+            if (bExistInTaskList == false)
+            {
+                //item.WroteCondition = false;
+                if (item.LastAlarmAttr != ConfigInfo.AlarmAttr.Exist)
+                {
+                    WriteResultAppend(Paths.resultFile, "PROC#" + item.FileName);
+                    item.LastAlarmAttr = ConfigInfo.AlarmAttr.Exist;
+                }
+            }
+            else
+            {
+                //item.WroteExist = false;
+                foreach (var v in findMems)
+                {
+                    if ((item.Condition == '>' && v > item.CondValue) || (item.Condition == '<' && v < item.CondValue))
+                    {
+                        if (item.LastAlarmAttr != ConfigInfo.AlarmAttr.Memory)
+                        {
+                            WriteResultAppend(Paths.resultFile, item.Line);
+                            item.LastAlarmAttr = ConfigInfo.AlarmAttr.Memory;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        item.LastAlarmAttr = ConfigInfo.AlarmAttr.None;
+                    }
+                }
+            }
+        }
+
         public void DoMonitoring()
         {
             // load config file
@@ -140,79 +205,18 @@ namespace Monitoring
 
             while (true)
             {
+                List<Tuple<string, int>> procList = getTaskList();
+
                 foreach (var item in monitorList)
                 {
-                    if (item.Type == (int)ConfigInfo.EnumType.File)
+                    if (item.Type == ConfigInfo.MonitoringType.File)
                     {
-                        FileInfo fi = getFileInfo(item.FileName);
-                        if (fi.Exists)
-                        {
-                            item.WroteExist = false;
-                            if ((item.Condition == '>' && fi.Length > item.CondValue * 1024) || (item.Condition == '<' && fi.Length < item.CondValue * 1024))
-                            {
-                                if (item.WroteCondition == false)
-                                {
-                                    WriteResultAppend(Paths.resultFile, item.Line);
-                                    item.WroteCondition = true;
-                                }
-                            }
-                            else
-                            {
-                                item.WroteCondition = false;
-                            }
-                        }
-                        else
-                        {
-                            item.WroteCondition = false;
-                            if (item.WroteExist == false)
-                            {
-                                WriteResultAppend(Paths.resultFile, "FILE#" + item.FileName);
-                                item.WroteExist = true;
-                            }
-                        }
+                        FileAlarmCheck(item);
                     }
                     else // Proc
                     {
-                        List<Tuple<string, int>> procList = getTaskList();
-                        List<int> findMems = new List<int>();
-                        bool bExistInTaskList = false;
-                        foreach(var v in procList)
-                        {
-                            if (v.Item1 == item.FileName)
-                            {
-                                findMems.Add(v.Item2);
-                                bExistInTaskList = true;
-                            }
-                        }
-
-                        if (bExistInTaskList == false)
-                        {
-                            item.WroteCondition = false;
-                            if (item.WroteExist == false)
-                            {
-                                WriteResultAppend(Paths.resultFile, "PROC#" + item.FileName);
-                                item.WroteExist = true;
-                            }
-                        }
-                        else
-                        {
-                            item.WroteExist = false;
-                            foreach (var v in findMems)
-                            {
-                                if ((item.Condition == '>' && v > item.CondValue) || (item.Condition == '<' && v < item.CondValue))
-                                {
-                                    if (item.WroteCondition == false)
-                                    {
-                                        WriteResultAppend(Paths.resultFile, item.Line);
-                                        item.WroteCondition = true;
-                                    }
-                                }
-                                else
-                                {
-                                    item.WroteCondition = false;
-                                }
-                            }
-                        }
+                        //..List<Tuple<string, int>> procList = getTaskList();
+                        ProcAlarmCheck(item, procList);
                     }
                 }
                 Thread.Sleep(1000);
@@ -238,31 +242,32 @@ namespace Monitoring
     
     class ConfigInfo
     {
-        public enum EnumType { File, Proc, Error };
+        public enum MonitoringType { File, Proc, Error };
+        public enum AlarmAttr { None, Exist, Size, Memory };
 
         public string Line {get; set;}
-        public int Type { get; set; } // File or Proc
+        public MonitoringType Type { get; set; } // File or Proc
         public string FileName { get; set;  }
         public char Condition { get; set;  } // "<" or ">"
         public int CondValue { get; set;  } // File or Mem Size Value
         public bool WroteExist { get; set;  }
         public bool WroteCondition { get; set; }
-
+        public AlarmAttr LastAlarmAttr { get; set; }
         private void parsing(string input)
         {
             Line = input;
             string[] words = input.Split('#');
             if (words[0] == "FILE")
             {
-                Type = (int)EnumType.File;
+                Type = MonitoringType.File;
             }
             else if (words[1] == "PROC")
             {
-                Type = (int)EnumType.Proc;
+                Type = MonitoringType.Proc;
             }
             else
             {
-                Type = (int)EnumType.Error;
+                Type = MonitoringType.Error;
             }
 
             FileName = words[1];
@@ -287,6 +292,7 @@ namespace Monitoring
                     CondValue = int.Parse(condWords[1]);
                 }
             }
+            LastAlarmAttr = AlarmAttr.None;
         }
 
         public ConfigInfo() { }
