@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Monitoring", "Monitoring\Mo
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PROG01", "PROG01\PROG01.vcxproj", "{EC7EFCD0-03F1-4947-BF28-2F0B1E9DD3F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniqueID", "UniqueID\UniqueID.csproj", "{E3F83652-1882-4874-A244-85A3645A8E12}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemInformation", "UniqueID\SystemInformation.csproj", "{E3F83652-1882-4874-A244-85A3645A8E12}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

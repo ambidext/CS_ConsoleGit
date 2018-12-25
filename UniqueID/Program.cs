@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Management;
 using System.Net.NetworkInformation;
+using System.Diagnostics;
+using System.Threading;
 
 namespace UniqueID
 {
@@ -18,6 +20,21 @@ namespace UniqueID
             uids.RetrieveProcessorInfo();
             uids.GetMAC();
             uids.GetHarddiskSerial();
+
+            SysInfo sysinfo = new SysInfo();
+            sysinfo.GetCPU_Usage();
+        }
+    }
+
+    class SysInfo
+    {
+        public void GetCPU_Usage()
+        {
+            PerformanceCounter Cpu = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+            float CpuUse = Cpu.NextValue();
+            Thread.Sleep(1000);
+            CpuUse = Cpu.NextValue();
+            Console.WriteLine("CPU Usage : " + CpuUse);
         }
     }
 

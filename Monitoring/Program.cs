@@ -59,9 +59,9 @@ namespace Monitoring
             //fs.Close();
         }  
 
-        protected List<Tuple<string, int>> getTaskList()
+        protected List<TasklistInfo> getTaskList()
         {
-            List<Tuple<string, int>> tList = new List<Tuple<string, int>>();
+            List<TasklistInfo> tList = new List<TasklistInfo>();
             ProcessStartInfo start = new ProcessStartInfo();
             start.FileName = "tasklist.exe";
             start.UseShellExecute = false;
@@ -77,25 +77,9 @@ namespace Monitoring
                     break;
                 if (line == "")
                     continue;
-                char[] delimiter = { ' ' };
-                string[] strWords = line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
-                if (strWords.Length < 6)
-                    continue;
-                int lastIdx = strWords.Length - 1;
-                if (strWords[lastIdx] == "K")
-                {
-                    string procName = "";
-                    int memSize = int.Parse(strWords[lastIdx - 1].Replace(",", ""));
 
-                    for (int i = 0; i < strWords.Length - 5; i++) // 뒤에서 5개까지는 이름이 아니므로, 5개를 제외한 나머지가 모두 Process이름
-                    {
-                        if (i != 0)
-                            procName += " ";
-                        procName += strWords[i];
-                    }
-                    //Console.WriteLine(procName + ": " + memSize);
-                    tList.Add(new Tuple<string, int>(procName, memSize));
-                }
+                TasklistInfo taskInfo = new TasklistInfo(line);
+                tList.Add(taskInfo);
             }
             return tList;
         }
@@ -154,15 +138,15 @@ namespace Monitoring
             }
         }
 
-        private void ProcAlarmCheck(ConfigInfo item, List<Tuple<string, int>> procList)
+        private void ProcAlarmCheck(ConfigInfo item, List<TasklistInfo> procList)
         {
             List<int> findMems = new List<int>();
             bool bExistInTaskList = false;
             foreach (var v in procList)
             {
-                if (v.Item1 == item.FileName)
+                if (v.ProcName == item.FileName)
                 {
-                    findMems.Add(v.Item2);
+                    findMems.Add(v.MemSize);
                     bExistInTaskList = true;
                 }
             }
@@ -205,7 +189,7 @@ namespace Monitoring
 
             while (true)
             {
-                List<Tuple<string, int>> procList = getTaskList();
+                List<TasklistInfo> procList = getTaskList();
 
                 foreach (var item in monitorList)
                 {
@@ -228,18 +212,56 @@ namespace Monitoring
     {
         public void WriteLargerMemsProc(int size)
         {
-            List<Tuple<string, int>> tList = getTaskList();
+            List<TasklistInfo> tList = getTaskList();
 
             foreach(var v in tList)
             {
-                if (v.Item2 > size)
+                if (v.MemSize > size)
                 {
-                    WriteResultAppend(Paths.processOutFile, v.Item1 + " " + v.Item2);
+                    WriteResultAppend(Paths.processOutFile, v.ProcName + " " + v.MemSize);
                 }
             }
         }
     }
     
+    class TasklistInfo
+    {
+        public String Line { get; set; }
+        public String ProcName { get; set; }
+        public int MemSize { get; set;  }
+        public bool IsProcessInfo { get; set; }
+        public TasklistInfo() { }
+        public TasklistInfo(String input)
+        {
+            parsing(input);
+        }
+
+        private void parsing(string input)
+        {
+            char[] delimiter = { ' ' };
+            string[] strWords = input.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+            if (strWords.Length < 6)
+            {
+                IsProcessInfo = false;
+                return;
+            }
+            Line = input;
+            int lastIdx = strWords.Length - 1;
+            if (strWords[lastIdx] == "K")
+            {
+                ProcName = "";
+                MemSize = int.Parse(strWords[lastIdx - 1].Replace(",", ""));
+
+                for (int i = 0; i < strWords.Length - 5; i++) // 뒤에서 5개까지는 이름이 아니므로, 5개를 제외한 나머지가 모두 Process이름
+                {
+                    if (i != 0)
+                        ProcName += " ";
+                    ProcName += strWords[i];
+                }
+            }
+        }
+    }
+
     class ConfigInfo
     {
         public enum MonitoringType { File, Proc, Error };
