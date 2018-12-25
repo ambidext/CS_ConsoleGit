@@ -1,0 +1,245 @@
+[로직 설계]
+
+1. 입출력부 
+ 1) Console 입력 
+  - 라인 단위 스트링으로 입력 받음. Blocking방식으로 입력 처리.
+ 2) Config File 입력 
+  - 텍스트 파일을 Open하여 라인 단위 스트링으로 입력 받음. 
+  - 한 라인 읽은 후 parsing하여 정보들을 적절한 변수에 세팅.
+ 3) 입출력 파일 Path
+
+  - 공통으로 사용하는 상수값에 대해서는 static class를 만들어서 사용
+ 4) 결과 파일 출력 
+  - 기존에 Write한 내용을 유지하며 계속 덧붙이는 방식으로 출력해야 하므로 Append모드 사용
+
+  - 하나의 File을 출력하는데 Thread가 2개 이상이 되면 동기화 이슈가 발생하므로 되도록 출력파일 하나에 Thread 하나로 맞춰주는 것이 좋음
+
+  - LOG파일로서 의미를 가지려면 Alarm이 발생한 시각을 같이 출력해 주어야 함 (제한사항)
+
+
+2. Config 관리
+ 1) Config파일의 한 라인이 Alarm에 대한 모든 조건을 가지고 있으므로 해당 항목들을 관리할 Config Class 생성하고, 각 라인을 하나의 Item으로 하여 List로 구성.
+
+ 2) Config Class는 확장 가능하게 설계
+   - File, Proc외에 추가로 Monitoring할 수 있는 Type을 쉽게 추가할 수 있게 구성
+     ex) System Memory 사용량, Disk 사용량, CPU 점유율 등
+
+   - File에 대해서는 존재유무와 SIZE를 조건으로 Alarm을 발생하고, Process는 존재유무와  메모리 사용량 조건으로 Alarm을 발생하는데, 향후 다른 조건들도 추가하기 쉬운 구조로 설계 
+     ex1) FILE : 생성시각, 수정시각, 마지막 Access 시각 등 
+     ex2) PROCESS : PID, Priority, Processor 사용 시간, Process Exit Code, Process Exit Time 등
+ 3) Parsing 
+   - #을 separator로 설정하여 문자열 split. SIZE parsing은 ‘<‘,’>’을 적절히 사용.
+
+3. Monitoring Logic
+
+ 1) Thread 사용 
+   - 1초 간격으로 Monitoring 작업을 수행. 
+   - 1초를 딱 맞출 필요는 없으므로 루프에 Sleep 1초를 주면 되고, 좀 더 정확하게 1초 간격을 유지하려면 1초에서 수행 시간을 뺀 값으로 Sleep 값을 설정하면 됨. 
+ 2) Alarm Check 
+   - Config List의 Item순서로 Alarm Check 수행 
+   - 요구사항에서는 File과 Process에 대해서만 Monitoring하게 되어 있는데, 향후에 Type이 추가되었을 경우 Logic 수행부를 추가하기 쉽게 설계
+
+     : Type별 Alarm Check 수행 Thread나 메서드를 추가하기 쉬운 구조로 구성
+      ex) FileAlarmCheck(), ProcAlarmCheck(), SysMemAlarmCheck(), DiskAlarmCheck(), … 
+   - Alarm 발생 후 동일 Alarm에 대해서는 결과를 출력하지 않아야 하므로, 마지막으로 발생한 Alarm의 속성을 기억하고 있다가 다시 Alarm이 발생할 경우 마지막 발생 Alarm의 속성과 다를 경우에만 결과 출력
+
+ 
+
+4. Main Logic (Process Memory Logic)
+
+ 1) 실행 후 1초 Monitoring Thread 생성 
+ 2) Console 입력 처리 후 Logic 수행. Logic 처리 후 Console 입력부로 이동.
+ 3) Process Memory 비교 Logic 수행 후 결과 파일 출력 
+
+5. tasklist.exe 수행 & Task List 생성
+ 1) tasklist.exe를 수행시킨 출력결과를 관리할 TasklistInfo Class를 생성
+    : 향후 Tasklist에서 사용할 정보가 늘어났을 경우 추가가 쉽게 되도록 구성 
+ 2) 라인 단위로 출력값을 읽어와서 파싱 후 Process Name과  Memory Size를 TasklistInfo Class의 변수에 세팅
+
+    : tasklist.exe의 결과값을 parsing할 경우 separator를 빈 칸으로 하여 구분하면 되는데, Procss Name에 빈 칸이 들어갈 경우가 있으므로 주의 필요 a 뒤에서부터 읽으면 문제 없음.
+
+ 3) 동일 이름의 Process Name이 존재하므로 하나의 정보만 Add하지 말고 Loop를 사용하여  모두 처리해야 하는 것을 주의해야 함. 
+ 4) tasklist.exe를 사용하는 대신 시스템 정보를 읽어오는 API를 사용할 수 도 있지만, 요구사항에서 tasklist.exe의 라인 결과를 그대로 출력하라고 하였으니 tasklist.exe를 이용하는 것이 좋음. 요구사항에 tasklist.exe를 사용하지 않고 프로세스 이름과 메모리값만 출력하는 것으로 되어있었다면 API를 사용하는 것이 문자열 parsing루틴을 제외할 수 있어서 더 효율적이라고 판단함.
+
+[모듈화 및 확장성]
+
+1. UI, Logic, Config처리 부분을 분리하여 설계
+  - 입출력 처리부 이외의 Logic과 Config처리는 별도 Class를 만들어서 처리.
+
+2. Logic Class 확장성
+  - 크게 사용자 입력을 받아 처리하는 5번문항의 기능과, 1~4번 문항의 Monitoring기능으로 구분 가능.
+    : Logic Class에는 공통 함수/변수들을 담아두고, 기능별로 Logic Class를 상속 받아 자식 Class를 생성하여 확장할 수 있게 함. 
+     Ex) 기능별로 결과파일의 포맷이 변경되어도 각각 쉽게 처리할 수 있음.
+
+3. 모니터링할 수 있는 Type 확장성 
+  - 현재 모니터링하는 Type이 File과 Proc만 있지만 향후 System Memory 사용량, Disk 사용량, CPU 점유율 등도 추가할 수 있기 때문에 확장 가능한 구조로 설계. 
+    : Type 구분을 Enum으로 구성하여 별도 Type이 생길 경우 쉽게 추가할 수 있는 구조로 처리.
+     Ex) File, Proc, SystemMem, Disk, …
+    : Type별로 처리해야 하는 Monitoring 작업은 메서드 하나를 추가하여 사용하면 되는 구조로 처리.
+     Ex1) FileAlarmCheck(), ProcAlarmCheck(), SysMemAlarmCheck(), DiskAlarmCheck(), … 
+     Ex2) ProcAlarmCheck()수행 시 Process를 Kill하거나 다시 실행시키는 기능 등을 쉽게 추가할 수 있음
+     a Type별로 처리해야 하는 Monitoring 작업을 별도 Thread를 생성하여 처리할 수도 있으나, 결과 파일이 동일할 경우 동기화를 처리해야 하기 때문에 별도 메서드로 처리하는 것이 더 좋다고 판단함.
+
+4. Type별로 Alarm Check해야 하는 Attribute 확장성
+ - File은 현재 존재여부와 Size를 Check하고 있지만, 생성날짜, 수정날짜 등도 Check할 항목으로 추가 가능하고, 
+   Proc은 존재유무, 메모리 사용량 이외에 PID, Priority, Processor 사용 시간, Process Exit Code, Process Exit Time 등도 추가 가능 
+    : Attribute 구분을 Enum으로 구성하여 별도 Attribute가 생길 경우 쉽게 추가할 수 있는 구조로 처리. 
+      Ex) None, Exist, Size, Memory, PID, Priority, …
+    : Alarm 결과를 한 번 쓰고 나면 동일 알람에 대해서는 다시 쓰지 않는 요구조건을 만족하기 위해 Attribute 타입의 변수를 하나 두어 Alarm 발생 시 Last Alarm여부를 구분하는 용도로도 활용. Alarm이 해제되면 None으로 세팅하여 이후 어떤 Attribute의 Alarm 조건이 만족하던지 알람 결과 작성. 
+
+[상용화 고려]
+
+?1. UI
+ 1) Console UI -> Windows 기반 UI로 변경 
+  - UI를 사용하지 않을 경우에는 Tray Icon으로 처리하면 좋을 듯
+  - 사용자 Input 및 결과 출력에 필요한 화면 구성
+ 2) 화면 구성
+  - Config 생성, 수정, 저장, 삭제 화면
+  - Alarm History View, 검색 화면
+  - 실시간 사용량 등에 대한 그래프 등 시각화 화면 등
+
+2. 기능
+ 1) Config 기능 보강 
+  - ‘생성, 수정, 저장, 삭제’가 용이할 수 있는 UI로 구성
+  - 특정 Alarm 조건 적용 시점 등 스케줄링 기능 추가
+  - 심각한 알람의 경우 워닝팝업을 띄우는 기능 등을 옵션으로 추가 
+ 2) 알람 발생 시 결과 출력 기능 추가
+  - 로그파일 저장 시 알람이 발생한 시각 추가
+  - 알람이 해제되었을 경우도 로그파일에 추가
+  - 심각한 알람이 발생했을 경우에는 UI상으로 팝업 메시지 표시 등의 적극적인 워닝 (옵션처리)
+  - 기능 별로 로그파일 분리 고려
+ 3) Monitoring 항목 추가 
+  - File, Process에 추가하여 System Memory, Disk 사용량, CPU 사용량 등 추가 
+  - 복합 Monitoring조건 추가 
+     Ex) Disk 잔량이 500Mbyte이하로 남았을 때 특정 파일의 크기가 100MByte이상일 경우 
+ 4) 서버-클라이언트 기능
+  - 알람 및 모니터링 결과를 서버로 전송하여 중앙에서 한 눈에 관리하고 있는 PC들의 상태를 파악할 수 있게 구성
+ 5) 제품 배포 파일 구성(EXE, MSI 등의 설치파일 제작)
+?
+3. 불법 사용 방지 ? 제품 Key관리 필요
+
+ 1) On-line 환경에서 사용할 경우 서버와의 통신으로 올바로 등록된 제품인지 확인 (제품 등록 프로세스 진행 필요)
+ 2) Off-line 환경에서 사용할 경우 
+   - HW Dongle을 사용하는 것이 가장 안전함
+   - Dongle을 사용하지 않을 경우 HW의 유일값을 이용하여 제품등록에 이용할 수 있게 함
+      ex) Machine GUID, MAC주소, Processor ID, Motherboard ID, 하드디스크 시리얼넘버 등
+   - 최소한 주기적으로 실행파일 자신의 File Size를 Check하면 크랙이나 바이러스 감염 등을 확인할 수 있음
+
+? Machine GUID 정보 : HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Cryptography 
+? Processor ID 등의 정보 : ManagementObjectSearcher Class 사용 (Win32_Processor, Win32_baseboard, Win32_DiskDrive, … )
+? CPU사용량, 시스템메로리사용량 : PerformanceCounter Class 사용
+? MAC 주소 : NetworkInterface Class 사용
+
+
+
+u 외부 프로그램 실행 및 콘솔 출력 가져오기
+ ProcessStartInfo start = new ProcessStartInfo();
+
+ start.FileName = "tasklist.exe";
+
+ start.UseShellExecute = false;
+
+ start.RedirectStandardOutput = true;
+
+ start.CreateNoWindow = true;
+
+
+ Process process = Process.Start(start);         // exe 실행시
+
+ StreamReader reader = process.StandardOutput;   // 출력되는 값을 가져오기 위해 StreamReader에 연결 
+
+ while (true)
+
+ {
+
+     string line = reader.ReadLine();            // 출력값의 한 라인을 읽는다
+
+      …
+
+ }
+
+ 
+
+u Process 정보 읽어서 메모리 사용량 얻어오기
+ Process[] all = Process.GetProcessesByName(“PROG01"); 
+ foreach (Process thisProc in all.OrderBy(x => x.ProcessName)) 
+ { 
+    string Name = thisProc.ProcessName; 
+    Console.WriteLine("Name : " + Name); 
+    Console.WriteLine("NonpagedSystemMemorySize64 : " + thisProc.NonpagedSystemMemorySize64); 
+    Console.WriteLine("PagedMemorySize64 : " + thisProc.PagedMemorySize64); 
+    Console.WriteLine("PagedSystemMemorySize64 : " + thisProc.PagedSystemMemorySize64); 
+    Console.WriteLine("PeakPagedMemorySize64 : " + thisProc.PeakPagedMemorySize64); 
+    Console.WriteLine("PeakVirtualMemorySize64 : " + thisProc.PeakVirtualMemorySize64); 
+    Console.WriteLine("PeakWorkingSet64 : " + thisProc.PeakWorkingSet64); 
+    Console.WriteLine("PrivateMemorySize64 : " + thisProc.PrivateMemorySize64); 
+    Console.WriteLine("PrivilegedProcessorTime : " + thisProc.PrivilegedProcessorTime); 
+    Console.WriteLine("ProcessorAffinity : " + thisProc.ProcessorAffinity); 
+    Console.WriteLine("TotalProcessorTime : " + thisProc.TotalProcessorTime); 
+    Console.WriteLine("UserProcessorTime : " + thisProc.UserProcessorTime); 
+    Console.WriteLine("VirtualMemorySize64 : " + thisProc.VirtualMemorySize64); 
+    Console.WriteLine("WorkingSet64 : " + thisProc.WorkingSet64); // tasklist에서 보이는 메모리 사용량
+    Console.WriteLine(); 
+ }
+
+ 
+
+u 파일 속성
+FileInfo fi = new FileInfo(path);
+
+파일 존재 여부 : fi.Exists
+
+파일 크기 : fi.Length
+
+
+u 파일 Append로 쓰기
+1) 텍스트 파일
+StreamWriter sw = new StreamWriter(path, true);
+
+sw.WriteLine(line);
+
+sw.Close();
+
+
+2) 바이너리 파일
+ FileStream fs = new FileStream("test.bin", FileMode.Append);
+
+ byte[] byteArray = { 0x01, 0x02, 0x03 };
+
+ fs.Write(byteArray, 0, byteArray.Length);
+
+ fs.Close();
+
+u 문자열 공백 단위로 나누기
+char[] delimiter = { ' ' };
+
+string[] strWords = line.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+
+
+u Create Thread
+ThreadLogic th = new ThreadLogic();
+
+Thread workerThread = new Thread(th.DoMonitoring);
+
+workerThread.Start();    // start함수 안에 parameter를 넣는다.
+
+ 
+
+* FileInfo Class로 얻을 수 있는 정보들
+  public override bool Exists { get; } // 존재 여부
+  public long Length { get; } // 파일 크기
+
+
+* FileSystemInfo Class로 얻을 수 있는 정보들(FileInfo Class는 FileSystemInfo Class를 상속받음)
+ public FileAttributes Attributes { get; set; } // 파일 속성 얻어오기/세팅하기
+ public DateTime CreationTime { get; set; } // 파일 생성 시각
+ public DateTime LastAccessTime { get; set; } // 파일 최종 access 시각
+ public DateTime LastWriteTime { get; set; } // 파일 최종 Write 시각
+
+* Process Class로 얻을 수 있는 정보들
+ public long WorkingSet64 { get; } // Memory 사용량
+ public int BasePriority { get; } // Priority
+ public TimeSpan TotalProcessorTime { get; } // Processor Time
+ public int ExitCode { get; } // Processor Exit Code
+   : C# - Environment.Exit(-1)
+   : C언어 - exit(-1)
