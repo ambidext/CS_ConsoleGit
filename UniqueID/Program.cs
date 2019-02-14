@@ -77,7 +77,11 @@ namespace UniqueID
 
         public void GetMAC()
         {
-            Console.WriteLine("MAC : "+NetworkInterface.GetAllNetworkInterfaces()[0].GetPhysicalAddress());
+            foreach(var item in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                Console.WriteLine("MAC : " + item.GetPhysicalAddress());
+            }
+            //Console.WriteLine("MAC : "+NetworkInterface.GetAllNetworkInterfaces()[0].GetPhysicalAddress());
         }
 
         public void GetHarddiskSerial()
