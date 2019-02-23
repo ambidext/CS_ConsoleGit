@@ -8,6 +8,20 @@ namespace Calculator
 {
     class Program
     {
+        static bool IsSymbol(String sym)
+        {
+            if (sym.Equals("*") || sym.Equals("/") || sym.Equals("+") || sym.Equals("-") || sym.Equals("^"))
+                return true;
+            return false;
+        }
+
+        static bool IsDigit(char ch)
+        {
+            if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch == 'x') || (ch == 'b') || (ch == '.'))
+                return true;
+            return false;
+        }
+
         static string IntCalc(string input)
         {
             string result = null;
@@ -19,29 +33,42 @@ namespace Calculator
                 input = "0" + input;
 
             // 숫자 추출  
+            int PlusMinus = 1;
             for (int i = 0; i < input.Length; i++)
             {
-                if (input[i] >= '0' && input[i] <= '9')
+                if (IsDigit(input[i]))
                 {
                     strNum += input[i];
                 }
                 else // +-*/ 기호 
                 {
-                    numStack.Push(strNum);
+                    if (strNum != "")
+                        numStack.Push(int.Parse(strNum)*PlusMinus+"");
+
+                    if (IsSymbol(numStack.First()))
+                    {
+                        if (input[i] == '-')
+                            PlusMinus = -1;
+                        else
+                            PlusMinus = 1;
+                    }
+                    else
+                    {
+                        numStack.Push(input[i].ToString());
+                    }
                     strNum = "";
-                    numStack.Push(input[i].ToString());
                 }
             }
             if (strNum != "")
             {                
-                numStack.Push(strNum);
+                numStack.Push(int.Parse(strNum)*PlusMinus+"");
             }
 
             // 곱하기, 나누기 처리 
             Stack<string> calcStack = new Stack<string>();
             foreach (var item in numStack)
             {
-                if (item == "*" || item == "/" || item == "+" || item == "-")
+                if (IsSymbol(item))
                 {
                     calcStack.Push(item);
                 }
@@ -104,7 +131,7 @@ namespace Calculator
             return result;
         }
 
-        static string NormalCalc(string input)
+        static string IntegerCalc(string input)
         {
             string result = null;
             //------------------------------
@@ -122,6 +149,8 @@ namespace Calculator
                         if (temp == '(')
                         {
                             string dc = IntCalc(inBrace);
+                            if (dc == "INF")
+                                return "INF";
                             foreach (var item in dc)
                             {
                                 charStack.Push(item);
@@ -189,7 +218,7 @@ namespace Calculator
             // 숫자 추출 & 10진수 변환
             for (int i = 0; i < input.Length; i++)
             {
-                if ((input[i] >= '0' && input[i] <= '9') || (input[i] == 'x') || input[i] == 'b')
+                if (IsDigit(input[i]))
                 {
                     strNum += input[i];
                 }
@@ -204,7 +233,9 @@ namespace Calculator
             if (strNum != "")
                 numQ = numQ + Conv10(strNum);
 
-            string decRes = NormalCalc(numQ);
+            string decRes = IntegerCalc(numQ);
+            if (decRes == "INF")
+                return "INF";
             string hexRes = "0x" + int.Parse(decRes).ToString("X");
             string binRes = Convert.ToString(int.Parse(decRes), 2) + "b"; 
             result = decRes + " " + hexRes + " " + binRes;
@@ -262,7 +293,7 @@ namespace Calculator
             // 숫자 추출 & factorial 처리 
             for (int i = 0; i < input.Length; i++)
             {
-                if (input[i] >= '0' && input[i] <= '9' || input[i] == '.' || input[i] == 'S' || input[i] == 'C' || input[i] == 'T' || input[i] == 'L')
+                if (IsDigit(input[i]) || input[i] == 'S' || input[i] == 'C' || input[i] == 'T' || input[i] == 'L')
                 {
                     strNum += input[i];
                 }
@@ -274,7 +305,9 @@ namespace Calculator
                 }
                 else // +-*/ 기호 
                 {
-                    double dNum = GetTriValue(strNum);
+                    double dNum = 0.0;
+                    if (strNum != "")
+                        dNum = GetTriValue(strNum);
 
                     numStack.Push(dNum.ToString());
                     strNum = "";
@@ -291,7 +324,7 @@ namespace Calculator
             Stack<string> calcStack = new Stack<string>();
             foreach (var item in numStack)
             {
-                if (item == "*" || item == "/" || item == "+" || item == "-" || item == "^")
+                if (IsSymbol(item))
                 {
                     calcStack.Push(item);
                 }
@@ -352,7 +385,7 @@ namespace Calculator
                 str = calcStack.Pop();
                 num2 = double.Parse(str);
 
-                double total = 0;
+                double total = 0.0;
                 if (sym == "+")
                     total = num1 + num2;
                 else if (sym == "-")
@@ -385,6 +418,9 @@ namespace Calculator
                         if (temp == '(')
                         {
                             string dc = DoubleCalc(inBrace);
+                            if (dc == "INF")
+                                return "INF";
+
                             foreach(var item in dc)
                             {
                                 charStack.Push(item);
@@ -411,6 +447,8 @@ namespace Calculator
                 str = item + str; 
             }
             result = DoubleCalc(str);
+            if (result == "INF")
+                return "INF";
             double dRes = double.Parse(result);
             result = string.Format("{0:F3}", dRes);
             //------------------------------
@@ -425,7 +463,7 @@ namespace Calculator
             string EngineeringInput = "-0.123+2^(1/2)+SIN((40+5)*SIN(89+SIN(90)))+LOG(2*3+4)+5!";//"-2+2^(1/2)+SIN((40+5)*2)+LOG(2*3+4)+5!"; //"-2+2^(1/2)+SIN((40+5)*2)+LOG(2*3+4)+5!"; // 
 
             Console.WriteLine("Normal Calculator: " + NormalInput);
-            Console.WriteLine(NormalCalc(NormalInput));
+            Console.WriteLine(IntegerCalc(NormalInput));
             Console.WriteLine();
             Console.WriteLine("Programmer Calculator: " + ProgrammerInput);
             Console.WriteLine(ProgrammerCalc(ProgrammerInput));
