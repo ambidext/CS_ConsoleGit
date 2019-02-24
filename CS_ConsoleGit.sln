@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemInformation", "Unique
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calculator", "Calculator\Calculator.csproj", "{5401E0F4-03D4-4FDB-B5D8-E34876D41742}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Font", "Font\Font.csproj", "{D964AEEA-6EB7-492B-B229-79BC3791CCEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,18 @@ Global
 		{5401E0F4-03D4-4FDB-B5D8-E34876D41742}.Release|x64.Build.0 = Release|Any CPU
 		{5401E0F4-03D4-4FDB-B5D8-E34876D41742}.Release|x86.ActiveCfg = Release|Any CPU
 		{5401E0F4-03D4-4FDB-B5D8-E34876D41742}.Release|x86.Build.0 = Release|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Debug|x64.Build.0 = Debug|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Debug|x86.Build.0 = Debug|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Release|x64.ActiveCfg = Release|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Release|x64.Build.0 = Release|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Release|x86.ActiveCfg = Release|Any CPU
+		{D964AEEA-6EB7-492B-B229-79BC3791CCEB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
