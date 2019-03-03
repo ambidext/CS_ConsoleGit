@@ -213,11 +213,26 @@ namespace Font
             DisplayFontAfterTime(ch, width, sec);
         }
 
+        static char[,] fontChar(char ch)
+        {
+            char[,] result = null;
+            ///////////////////////////////////////////
+            result = new char[fSize, fSize];
+            fillOneFont(font[ch], result, 0);
+            ///////////////////////////////////////////
+            return result;
+        }
+
         static void Main(string[] args)
         {
-            Display("ABCDEF");
+            char [,] buf = fontChar('A');
+            DisplayFont(buf, fSize);
 
-            DisplayAfterTime("ABCDEF", 2);
+            //Display("ABCDEF");
+
+            //DisplayAfterTime("ABCDEF", 2);
         }
     }
 }
+
+
