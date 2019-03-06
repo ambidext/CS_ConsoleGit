@@ -8,6 +8,19 @@ namespace Category
 {
     class Program
     {
+        class cData
+        {
+            public string str1;
+            public string str2;
+
+            public cData() { }
+            public cData(string a, string b)
+            {
+                str1 = a;
+                str2 = b;
+            }
+        }
+
         public static List<string> categories;
         public static string categoryStr;
         static TreeNode<string> treeRoot = null;
@@ -69,64 +82,45 @@ namespace Category
         {
             string res = null;
 
-            // fill tree ///////////////////////////////////////////////////////////////////////////////////
+            // insert list
+            List<cData> inputList = new List<cData>();            
 
-            // sort inputData
-            List<string[]> inputList = new List<string[]>(); 
-            List<string[]> sortedList = new List<string[]>();
             for (int i=0; i<inputData.GetLength(0); i++)
             {
-                string[] temp = {inputData[i,0], inputData[i, 1]};
-                inputList.Add(temp);
+                inputList.Add(new cData(inputData[i,0], inputData[i, 1]));
             }
 
-            // find root
-            string rootStr = "";
-            foreach(var item in inputList)
-            {
-                if (!ContainsValue(inputList, item[0]))
-                {
-                    rootStr = item[0];
-                    sortedList.Add(item);
-                }
-            }
-
-            RemoveInList(inputList, sortedList);
+            // make tree
             while (true)
             {
                 if (inputList.Count == 0)
                     break;
-                for (int i=0; i<inputList.Count; i++)
-                {
-                    if (ContainsValue(sortedList, inputList[i][0]))
-                    {
-                        sortedList.Add(inputList[i]);
-                        inputList.Remove(inputList[i]);
-                        break;
-                    }
-                }
-            }
+                cData first = inputList[0]; 
+                inputList.RemoveAt(0);
 
-
-            for (int i = 0; i < sortedList.Count; i++)
-            {
-                TreeNode<string> found = null;
-                if (treeRoot != null)
+                if (treeRoot == null)
                 {
-                    found = treeRoot.FindTreeNode(node => node.Data != null && node.Data == sortedList[i][0]);
-                }
-
-                if (found != null && found.Data == sortedList[i][0])
-                {
-                    found.AddChild(sortedList[i][1]);
+                    treeRoot = new TreeNode<string>(first.str1);
+                    treeRoot.AddChild(first.str2);
                 }
                 else
                 {
-                    TreeNode<string> root = new TreeNode<string>(sortedList[i][0]);
-                    root.AddChild(sortedList[i][1]);
-                    treeRoot = root;
+                    TreeNode<string> found = treeRoot.FindTreeNode(node => node.Data != null && node.Data.Contains(first.str1));
+                    if (found != null)
+                    {
+                        found.AddChild(first.str2);
+                    }
+                    else if (treeRoot.Data == first.str2)
+                    {
+                        treeRoot = new TreeNode<string>(first.str1, treeRoot);
+                    }
+                    else
+                    {
+                        inputList.Add(first);
+                    }
                 }
             }
+            
             //////////////////////////////////////////////
 
             TreeNode<string> n1 = treeRoot.FindTreeNode(node => node.Data != null && node.Data == categories[0]);

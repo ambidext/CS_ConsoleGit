@@ -2,10 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Category
+namespace CSharpTree
 {
     public class TreeNode<T> : IEnumerable<TreeNode<T>>
     {
@@ -77,8 +75,8 @@ namespace Category
 
 
         #region searching
-
-        public ICollection<TreeNode<T>> ElementsIndex { get; set; } //.. private -> public
+        
+        public ICollection<TreeNode<T>> ElementsIndex { get; set; }    //.. private -> public
 
         private void RegisterChildForSearch(TreeNode<T> node)
         {
@@ -96,7 +94,7 @@ namespace Category
 
 
         #region iterating
-
+        
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();

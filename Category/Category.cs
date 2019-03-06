@@ -36,10 +36,10 @@ namespace Category
             List<string> hierarchy = new List<string>();
 
             int index = -1;
-            bool bFirst = false;
+            bool bFirst = true;
             foreach(var inputCategory in categories)
             {
-                if (!bFirst)
+                if (bFirst)
                 {
                     foreach (var item in tMap)
                     {
@@ -58,7 +58,7 @@ namespace Category
                             break;
                         }
                     }
-                    bFirst = true;
+                    bFirst = false;
                 }
                 else
                 {
