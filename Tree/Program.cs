@@ -11,7 +11,31 @@ namespace CSharpTree
         static void Main(string[] args)
         {
             // data 입력
-            TreeNode<string> treeRoot = SampleData.GetSet1();
+            TreeNode<string> treeRoot = new TreeNode<string>("root");
+            {
+                TreeNode<string> node0 = treeRoot.AddChild("node0");
+                TreeNode<string> node1 = treeRoot.AddChild("node1");
+                TreeNode<string> node2 = treeRoot.AddChild("node2");
+                {
+                    TreeNode<string> node20 = node2.AddChild(null);
+                    TreeNode<string> node21 = node2.AddChild("node21");
+                    {
+                        TreeNode<string> node210 = node21.AddChild("node210");
+                        {
+                            TreeNode<string> node2101 = node210.AddChild("node2101");
+                        }
+                        TreeNode<string> node211 = node21.AddChild("node211");
+                        {
+                            TreeNode<string> node2111 = node211.AddChild("node2111");
+                            TreeNode<string> node2112 = node211.AddChild("node2112");
+                        }
+                    }
+                }
+                TreeNode<string> node3 = treeRoot.AddChild("node3");
+                {
+                    TreeNode<string> node30 = node3.AddChild("node30");
+                }
+            }
 
             // 특정 data의 node찾기 
             TreeNode<string> found = treeRoot.FindTreeNode(node => node.Data != null && node.Data.Contains("node21"));
@@ -40,6 +64,14 @@ namespace CSharpTree
                 parent = parent.Parent;
             }
             Console.WriteLine();
+
+            // root 삽입
+            treeRoot = new TreeNode<string>("NewRoot", treeRoot);
+            Console.WriteLine("NewRoot : " + treeRoot.Data);
+            foreach (var item in treeRoot.Children)
+            {
+                Console.WriteLine("NewRoot's Child : " + item);
+            }
         }
     }
 }

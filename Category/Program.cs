@@ -29,18 +29,26 @@ namespace Category
         {
             string[,] inputData = LoadData();
 
+            // solution1
             string topCategory = GetTopCategory(inputData, categories);
             Console.WriteLine(topCategory);
 
             int numberOfSubcategories = GetNumberOfSubcategories(inputData, categoryStr);
             Console.WriteLine(numberOfSubcategories);
 
-            //
+            // solution2
             Category objCategory = new Category();
             string res = objCategory.GetCategory(inputData, categories);
             Console.WriteLine(res);
             int num = objCategory.GetNumberOfSubcategories(inputData, categoryStr);
             Console.WriteLine(num);
+
+            // solution3
+            Category3 objCategory3 = new Category3();
+            string res3 = objCategory3.GetCategory(inputData, categories);
+            Console.WriteLine(res3);
+            int num3 = objCategory3.GetNumberOfSubcategories(inputData, categoryStr);
+            Console.WriteLine(num3);
         }
 
         static bool ContainsValue(List<string[]> list, string str)
