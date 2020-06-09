@@ -91,9 +91,9 @@ namespace palindrome
         {
             Solution sol = new Solution();
 
-            int res = sol.LongestPalindromeSubSequence("aaaaba");
+            int res = sol.LongestPalindromeSubSequence("aabcdcbaba");
             Console.WriteLine(res);
-            res = sol.LongestPalindromeSubString("aaaaba");
+            res = sol.LongestPalindromeSubString("aabcdcbaba");
             Console.WriteLine(res);
         }
     }
