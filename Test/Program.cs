@@ -1,69 +1,42 @@
-﻿using System;
-using System.Collections;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
-namespace Test
+namespace JsonTest
 {
     class Program
     {
-        private static int[][] loadData()
-        {
-
-            //////////////////////////////////
-            // 제공 데이터 1
-            /////////////////////////////////
-            //int[][] icebergMap = new int[][] {
-            //            new int[] { 0, 0, 0, 0 },
-            //            new int[] { 0, 0, 4, 0 },
-            //            new int[] { 0, 4, 0, 4 },
-            //            new int[] { 0, 4, 0, 4 },
-            //            new int[] { 0, 4, 4, 4 },
-            //            new int[] { 0, 0, 0, 0 }
-            //};
-
-            //////////////////////////////////
-            // 제공 데이터 2
-            /////////////////////////////////
-            int[][] icebergMap = new int[][] {
-               new int[] { 0, 0, 0, 0, 4, 4 },
-               new int[] { 0, 0, 0, 4, 0, 4 },
-               new int[] { 0, 4, 4, 0, 4, 4 },
-               new int[] { 0, 4, 0, 0, 4, 0 },
-               new int[] { 4, 4, 4, 4, 4, 0 },
-               new int[] { 0, 4, 0, 0, 0, 0 }
-            };
-
-            return icebergMap;
-        }
-
-        static void printMap(int[][] data)
-        {
-            foreach (int[] line in data)
-            {
-                foreach (var item in line)
-                {
-                    Console.Write(item + " ");
-                }
-                Console.WriteLine();
-            }
-            Console.WriteLine();
-        }
-
         static void Main(string[] args)
         {
-            int[][] icebergMap = loadData();
-            printMap(icebergMap);
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Base64Enc.exe [src file] [des file]");
+                return;
+            }
+            string encodedStr = Convert.ToBase64String(File.ReadAllBytes(args[0]));
+            File.WriteAllText(args[1], encodedStr);
 
-            Iceberg iceberg = new Iceberg();
+        }
+        static void Base64Sample(string str)
+        {
+            //string str = "This is a Base64 test.";
+            byte[] byteStr = System.Text.Encoding.UTF8.GetBytes(str);
+            string encodedStr;
+            byte[] decodedBytes;
 
-            int[][] innerMap = iceberg.ConvertInnerWater(icebergMap);
-            printMap(innerMap);
+            Console.WriteLine(str);
 
-            int year = iceberg.GetCollapseYear(icebergMap);
-            Console.WriteLine(year);
+            encodedStr = Convert.ToBase64String(byteStr);
+            Console.WriteLine(encodedStr);
+
+            decodedBytes = Convert.FromBase64String(encodedStr);
+            Console.WriteLine(Encoding.Default.GetString(decodedBytes));
         }
     }
 }
