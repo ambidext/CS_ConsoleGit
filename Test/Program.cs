@@ -14,6 +14,7 @@ namespace JsonTest
     {
         static void Main(string[] args)
         {
+            Console.WriteLine("Branch Prac01 Test");
             if (args.Length < 2)
             {
                 Console.WriteLine("Base64Enc.exe [src file] [des file]");

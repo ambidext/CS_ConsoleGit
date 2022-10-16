@@ -9,7 +9,7 @@ namespace HTTP_CLIENT
         static void Main(string[] args)
         {
             HttpClient client = new HttpClient();
-            HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, "http://127.0.0.1:8080/requestDate");
+            HttpRequestMessage httpRequest = new HttpRequestMessage(HttpMethod.Get, "http://192.168.0.125:8085/requestDate");
             var res = client.SendAsync(httpRequest).Result;
             Console.WriteLine("Response :" + " - " + res.Content.ReadAsStringAsync().Result);
 

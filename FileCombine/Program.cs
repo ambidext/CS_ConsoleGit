@@ -24,7 +24,10 @@ namespace FileCombine
             {
                 string fname = orgFname + i;
                 byte[] totalBytes = File.ReadAllBytes(fname);
-                f_out.Write(totalBytes, 0, totalBytes.Length);
+                int len = totalBytes.Length;
+                if (totalBytes[totalBytes.Length - 1] == 0x0A)
+                    len--;
+                f_out.Write(totalBytes, 0, len);
             }
             f_out.Close();
         }
