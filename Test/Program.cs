@@ -15,6 +15,7 @@ namespace JsonTest
         static void Main(string[] args)
         {
             Console.WriteLine("Branch Master Test");
+            Console.WriteLine("Master branch");
             if (args.Length < 2)
             {
                 Console.WriteLine("Base64Enc.exe [src file] [des file]");
