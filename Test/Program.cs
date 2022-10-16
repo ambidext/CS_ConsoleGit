@@ -14,7 +14,7 @@ namespace JsonTest
     {
         static void Main(string[] args)
         {
-            // git test in local machine
+            // git test comment merge
             Console.WriteLine("Branch Master Test");
             Console.WriteLine("Master branch");
             if (args.Length < 2)
