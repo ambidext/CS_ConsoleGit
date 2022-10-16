@@ -14,6 +14,7 @@ namespace JsonTest
     {
         static void Main(string[] args)
         {
+            // git test comment
             Console.WriteLine("Branch Master Test");
             Console.WriteLine("Master branch");
             if (args.Length < 2)
