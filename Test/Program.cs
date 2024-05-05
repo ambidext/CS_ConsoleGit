@@ -14,32 +14,10 @@ namespace JsonTest
     {
         static void Main(string[] args)
         {
-            // git test comment merge
-            Console.WriteLine("Branch Master Test");
-            Console.WriteLine("Master branch");
-            if (args.Length < 2)
-            {
-                Console.WriteLine("Base64Enc.exe [src file] [des file]");
-                return;
-            }
-            string encodedStr = Convert.ToBase64String(File.ReadAllBytes(args[0]));
-            File.WriteAllText(args[1], encodedStr);
+            JObject jObj1 = JObject.Parse(File.ReadAllText("test1.json"));
+            JObject jObj2 = JObject.Parse(File.ReadAllText("test2.json"));
 
-        }
-        static void Base64Sample(string str)
-        {
-            //string str = "This is a Base64 test.";
-            byte[] byteStr = System.Text.Encoding.UTF8.GetBytes(str);
-            string encodedStr;
-            byte[] decodedBytes;
-
-            Console.WriteLine(str);
-
-            encodedStr = Convert.ToBase64String(byteStr);
-            Console.WriteLine(encodedStr);
-
-            decodedBytes = Convert.FromBase64String(encodedStr);
-            Console.WriteLine(Encoding.Default.GetString(decodedBytes));
+            Console.WriteLine(jObj1 == jObj2);
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Text;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Net;
+using System.Threading;
 
 namespace HTTP_SERVER
 {
@@ -11,7 +12,7 @@ namespace HTTP_SERVER
         static void Main(string[] args)
         {
             HttpListener listener = new HttpListener();
-            listener.Prefixes.Add("http://192.168.0.101:8085/");
+            listener.Prefixes.Add("http://127.0.0.1:8085/");
             listener.Start();
             while (true)
             {
@@ -42,6 +43,8 @@ namespace HTTP_SERVER
                     body.Close();
                     reader.Close();
                 }
+
+                Thread.Sleep(1000);
                 byte[] data = Encoding.UTF8.GetBytes(strRes);
                 context.Response.OutputStream.Write(data, 0, data.Length);
                 context.Response.StatusCode = 200;

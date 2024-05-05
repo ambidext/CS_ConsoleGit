@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.Threading;
+using DllStatic;
+
 namespace UseDLL
 {
     class Program
@@ -35,8 +37,18 @@ namespace UseDLL
             Console.WriteLine(a + "+" + b + "=" + res);
         }
 
+        static void CallStaticDll()
+        {
+            StaticClass staticClass = new StaticClass();
+            staticClass.MethodTest("input1");
+        }
+
         static void Main(string[] args)
         {
+            // static dll
+            CallStaticDll();
+
+            // Dynamic loading
             CallDll1();
 
             for (int i=0; i<10; i++)
